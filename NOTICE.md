@@ -6,7 +6,7 @@ The source for the current website's research claims, tabulated results and repr
 
 **SRE-Marathon: A Continuous, Change-Driven Benchmark for Autonomous Site Reliability Agents**
 
-Anonymous authors. Marked in the supplied PDF as under review at ICLR 2027.
+Anonymous authors. No publication venue is specified on this site.
 
 - Table 1: fault catalog counts.
 - Table 2: method/backbone results averaged over three applications.
@@ -14,7 +14,7 @@ Anonymous authors. Marked in the supplied PDF as under review at ICLR 2027.
 - Figure 2: benchmark system overview.
 - Figure 6: published case-study timelines.
 
-The PDF is preserved as supplied in `public/sre-marathon-paper.pdf`. Figure crops preserve their source content; captions on the website identify the figure and source page. Data is transcribed from the reported tables, including rounded values and missing entries. No new experimental results are claimed.
+The web distribution PDF is in `public/sre-marathon-paper.pdf`; its conference/review headers have been removed. The original supplied file outside this repository is unchanged. Figure crops preserve their source content; captions on the website identify the figure and source page. Data is transcribed from the reported tables, including rounded values and missing entries. No new experimental results are claimed.
 
 The benchmark source link is reproduced from the paper. Site implementation and data provenance are documented separately in README.md.
 

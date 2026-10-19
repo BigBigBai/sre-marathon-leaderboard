@@ -1,6 +1,6 @@
 # SRE-Marathon
 
-A project website for **SRE-Marathon: A Continuous, Change-Driven Benchmark for Autonomous Site Reliability Agents**, based on the supplied anonymous ICLR 2027 submission.
+A project website for **SRE-Marathon: A Continuous, Change-Driven Benchmark for Autonomous Site Reliability Agents**, based on the supplied anonymous manuscript.
 
 Website: https://bigbigbai.github.io/sre-marathon-leaderboard/
 
@@ -40,7 +40,7 @@ npm run preview
 | `data/leaderboard.json` | 19 reported configurations | Table 2, page 7 |
 | `data/applications.json` | App descriptions, catalog sizes and concurrency | Table 1, page 4; Sections 2/4 |
 | `data/supplementary.json` | Seed and load-regime results | Tables 7/8, page 20 |
-| `public/sre-marathon-paper.pdf` | Supplied anonymous manuscript | Original file |
+| `public/sre-marathon-paper.pdf` | Web distribution copy of the anonymous manuscript | Conference/review headers removed |
 | `public/assets/system-overview.png` | System architecture | Figure 2, page 3 |
 | `public/assets/case-comparison.png` | Published case timelines | Figure 6, page 9 |
 
@@ -55,7 +55,7 @@ Numbers are manually transcribed from the paper and validated; they are not reco
 - The overall score cannot be derived by averaging the displayed aggregate stage rates: its computation gates progress per fault.
 - Main rows average three applications. No per-application method results, raw time series, individual fault catalog or replay data is inferred.
 - The 700 catalog faults are distinct from the approximately 60 faults injected per main run.
-- The manuscript is marked as under review, with anonymous authors. No acceptance or institution is claimed.
+- The manuscript has anonymous authors. No acceptance, publication venue or institution is claimed.
 
 ## Source structure
 

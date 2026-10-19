@@ -1,7 +1,7 @@
 import { backboneName, escapeHTML as h, percent, decimal, money, tokens } from './model.js';
 
 export const sectionHeading = (number, label, title, intro = '', badge = '') => `<div class="section-head"><div><div class="eyebrow">${number} / ${label}</div><h2>${title}</h2>${intro ? `<p class="section-intro">${intro}</p>` : ''}</div>${badge ? `<span class="badge">${badge}</span>` : ''}</div>`;
-export const citation = `@misc{sre_marathon,\n  title = {SRE-Marathon: A Continuous,\n    Change-Driven Benchmark for\n    Autonomous Site Reliability Agents},\n  author = {Anonymous},\n  note = {Manuscript under review at ICLR 2027}\n}`;
+export const citation = `@misc{sre_marathon,\n  title = {SRE-Marathon: A Continuous,\n    Change-Driven Benchmark for\n    Autonomous Site Reliability Agents},\n  author = {Anonymous},\n  note = {Manuscript}\n}`;
 const categories = [{ key: 'codeBug', label: 'Code bugs', color: 'var(--code)' }, { key: 'configBug', label: 'Config bugs', color: 'var(--config)' }, { key: 'chaosTest', label: 'Chaos tests', color: 'var(--chaos)' }];
 export function catalogBar(app) {
   return `<div class="catalog-bar" role="img" aria-label="${app.codeBug} code bugs, ${app.configBug} config bugs, ${app.chaosTest} chaos tests">${categories.map(cat => `<span style="width:${app[cat.key] / app.total * 100}%;background:${cat.color}"></span>`).join('')}</div>`;
@@ -14,7 +14,7 @@ export function homeView(data, config) {
     <h1>SRE-Marathon</h1>
     <p class="hero-subtitle">A Continuous, Change-Driven Benchmark<br>for Autonomous Site Reliability Agents</p>
     <p class="hero-lede">Can agents keep a live system reliable as faults overlap, alerts accumulate, and operational pressure grows?</p>
-    <p class="hero-authors">${h(config.authors)} · ${h(config.paperStatus)}</p>
+    <p class="hero-authors">${h(config.authors)}</p>
     <div class="actions"><a class="btn primary" href="./sre-marathon-paper.pdf" target="_blank" rel="noopener">Read the paper <span>↗</span></a><a class="btn" href="${h(config.benchmarkRepository)}" target="_blank" rel="noopener">Benchmark code <span>↗</span></a><a class="btn" href="#leaderboard">Explore results <span>↓</span></a></div>
     <div class="stats-strip"><div class="stat"><strong>${applications.length}</strong><span>live applications</span></div><div class="stat"><strong>700</strong><span>catalogued faults</span></div><div class="stat"><strong>10</strong><span>evaluated methods</span></div><div class="stat"><strong>${bestScore.toFixed(1)} <small>/ 100</small></strong><span>best Marathon-Score</span></div></div>
   </div></section>
@@ -57,7 +57,7 @@ export function homeView(data, config) {
   </div></section>
   <section class="section" id="paper"><div class="container">
     ${sectionHeading('07', 'paper & resources', 'Read the research.')}
-    <div class="paper-block"><div><h3 class="paper-title">SRE-Marathon: A Continuous, Change-Driven Benchmark for Autonomous Site Reliability Agents</h3><p class="source-note">${h(config.authors)}<br>${h(config.paperStatus)}</p><p class="section-foot">This site presents the supplied manuscript’s reported results. Per-run bundles, per-application scores and the complete fault specifications are not included in these paper tables.</p><div class="actions"><a class="btn primary" href="./sre-marathon-paper.pdf" target="_blank" rel="noopener">Paper PDF ↗</a><a class="btn" href="${h(config.benchmarkRepository)}" target="_blank" rel="noopener">Benchmark code ↗</a><a class="btn" href="./data/leaderboard.json" download>Results JSON ↓</a></div></div><div class="citation"><button id="copy-citation" type="button" class="btn small">Copy citation</button><pre id="citation-text">${h(citation)}</pre><p id="copy-status" class="copy-status" role="status" aria-live="polite"></p></div></div>
+    <div class="paper-block"><div><h3 class="paper-title">SRE-Marathon: A Continuous, Change-Driven Benchmark for Autonomous Site Reliability Agents</h3><p class="source-note">${h(config.authors)}</p><p class="section-foot">This site presents the supplied manuscript’s reported results. Per-run bundles, per-application scores and the complete fault specifications are not included in these paper tables.</p><div class="actions"><a class="btn primary" href="./sre-marathon-paper.pdf" target="_blank" rel="noopener">Paper PDF ↗</a><a class="btn" href="${h(config.benchmarkRepository)}" target="_blank" rel="noopener">Benchmark code ↗</a><a class="btn" href="./data/leaderboard.json" download>Results JSON ↓</a></div></div><div class="citation"><button id="copy-citation" type="button" class="btn small">Copy citation</button><pre id="citation-text">${h(citation)}</pre><p id="copy-status" class="copy-status" role="status" aria-live="polite"></p></div></div>
   </div></section>`;
 }
 
