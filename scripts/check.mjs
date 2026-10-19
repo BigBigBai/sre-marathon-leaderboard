@@ -23,9 +23,7 @@ for (const file of await fs.readdir(path.join(root, 'dist/src'))) {
   for (const match of content.matchAll(/from ['"]\.\/([^'"]+)['"]/g)) await fs.access(path.join(root, 'dist/src', match[1]));
   assert.ok(!/swe-marathon\.org|abundant\.ai|formspree|\/trajectories\//i.test(content), `Stale upstream dependency: ${file}`);
 }
-for (const file of ['favicon.svg']) await fs.access(path.join(root, 'dist', file));
+for (const file of ['assets/system-overview.png', 'assets/case-comparison.png', 'sre-marathon-paper.pdf', 'favicon.svg']) await fs.access(path.join(root, 'dist', file));
 await assert.rejects(fs.access(path.join(root, 'dist/data/v1.1')));
 await assert.rejects(fs.access(path.join(root, 'dist/assets/index-BMEz9I0h.js')));
 console.log('Verified 19 configurations, 10 methods, 700 catalog faults, local assets and module paths. No SWE assets in the deployment.');
-
-for (const file of ['sre-marathon-paper.pdf', 'assets/system-overview.png', 'assets/case-comparison.png']) await assert.rejects(fs.access(path.join(root, 'dist', file)));

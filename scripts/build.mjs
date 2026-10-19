@@ -16,4 +16,4 @@ html = html.replaceAll('__DESCRIPTION__', escapeHTML(config.description)).replac
 await fs.writeFile(path.join(output, 'index.html'), html);
 await fs.rm(path.join(output, 'src/index.html'));
 await fs.writeFile(path.join(output, '.nojekyll'), '');
-console.log('Built SRE-Marathon project site in dist/ (no external runtime dependencies).');
+console.log('Built SRE-Marathon paper site in dist/ (no external runtime dependencies).');

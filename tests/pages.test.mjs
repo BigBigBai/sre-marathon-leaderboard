@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createStaticServer } from '../scripts/server.mjs';
-test('Pages project path serves the new site and data without legacy artifacts', async t => {
+test('Pages project path serves the new site, paper, charts and data without legacy artifacts', async t => {
   const server = createStaticServer(new URL('../dist/', import.meta.url).pathname, '/sre-marathon-leaderboard/');
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => server.close(resolve)));
@@ -20,7 +20,7 @@ test('Pages project path serves the new site and data without legacy artifacts',
   }
   for (const name of ['assets/system-overview.png', 'assets/case-comparison.png', 'sre-marathon-paper.pdf']) {
     const response = await fetch(new URL(name, base));
-    assert.equal(response.status, 404); await response.arrayBuffer();
+    assert.equal(response.status, 200); await response.arrayBuffer();
   }
   assert.equal((await fetch(new URL('data/v1.1/leaderboard.json', base))).status, 404);
   assert.equal((await fetch(new URL('assets/index-BMEz9I0h.js', base))).status, 404);

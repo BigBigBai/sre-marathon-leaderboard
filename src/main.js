@@ -1,5 +1,5 @@
 import { selectRows, validateData } from './model.js';
-import { homeView, leaderboardView, stagesView, costView, supplementaryView, applicationView } from './views.js';
+import { homeView, leaderboardView, stagesView, costView, supplementaryView, applicationView, citation } from './views.js';
 
 const main = document.getElementById('main');
 const state = { backbone: 'all', query: '', sort: 'marathonScore', direction: 'desc', fullMetrics: false, analysis: 'stages', analysisBackbone: 'kimi-k2.5' };
@@ -22,6 +22,20 @@ function renderAnalysis() {
   document.getElementById('analysis-filter-label').hidden = state.analysis !== 'stages';
   document.querySelectorAll('[data-analysis]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.analysis === state.analysis)));
 }
+async function copyCitation() {
+  const status = document.getElementById('copy-status');
+  try {
+    await navigator.clipboard.writeText(citation);
+    status.textContent = 'Citation copied.';
+  } catch {
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(document.getElementById('citation-text'));
+    selection.removeAllRanges();
+    selection.addRange(range);
+    status.textContent = 'Citation selected. Press Ctrl+C or ⌘C to copy.';
+  }
+}
 function bindHome() {
   document.getElementById('backbone-filter').value = state.backbone;
   document.getElementById('method-search').value = state.query;
@@ -39,6 +53,7 @@ function bindHome() {
   });
   document.getElementById('analysis-backbone').addEventListener('change', event => { state.analysisBackbone = event.target.value; renderAnalysis(); });
   document.querySelectorAll('[data-analysis]').forEach(button => button.addEventListener('click', () => { state.analysis = button.dataset.analysis; renderAnalysis(); }));
+  document.getElementById('copy-citation').addEventListener('click', copyCitation);
   renderLeaderboard();
   renderAnalysis();
   document.getElementById('supplementary-results').innerHTML = supplementaryView(dataset.supplementary);
@@ -95,7 +110,7 @@ try {
     route();
   });
 } catch (error) {
-  main.innerHTML = '<div class="error-box"><h1>Results could not be loaded.</h1><p id="load-error"></p><a class="btn" href="./data/leaderboard.json">Download results JSON ↓</a></div>';
+  main.innerHTML = '<div class="error-box"><h1>Results could not be loaded.</h1><p id="load-error"></p><a class="btn" href="./sre-marathon-paper.pdf">Read the paper instead ↗</a></div>';
   document.getElementById('load-error').textContent = error.message;
   console.error(error);
 }

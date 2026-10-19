@@ -1,6 +1,9 @@
 {
   "title": "SRE-Marathon",
-  "description": "A continuous, change-driven benchmark for autonomous site reliability agents. Explore 19 evaluation result configurations across three live microservice applications.",
+  "description": "A continuous, change-driven benchmark for autonomous site reliability agents. Explore 19 paper result configurations across three live microservice applications.",
   "publicUrl": "https://bigbigbai.github.io/sre-marathon-leaderboard/",
-  "sourceRepository": "https://github.com/BigBigBai/sre-marathon-leaderboard"
+  "sourceRepository": "https://github.com/BigBigBai/sre-marathon-leaderboard",
+  "benchmarkRepository": "https://anonymous.4open.science/r/SRE-Marathon-12321/",
+  "authors": "Anonymous authors",
+  "paperStatus": "Under review at ICLR 2027"
 }
