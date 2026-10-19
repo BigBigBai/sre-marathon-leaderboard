@@ -1,6 +1,6 @@
 # SRE-Marathon
 
-A project website for **SRE-Marathon: A Continuous, Change-Driven Benchmark for Autonomous Site Reliability Agents**, based on the supplied anonymous manuscript.
+A project website for **SRE-Marathon: A Continuous, Change-Driven Benchmark for Autonomous Site Reliability Agents**, with its public paper at https://arxiv.org/abs/2609.33023.
 
 Website: https://bigbigbai.github.io/sre-marathon-leaderboard/
 
@@ -23,7 +23,7 @@ npm run preview
 
 ## What is included
 
-- A project homepage, paper download and benchmark code link.
+- A project homepage, primary arXiv PDF/abstract links, public author list, BibTeX citation and benchmark code link.
 - All 19 Table 2 configurations, with backbone/search filters, numeric sorting, and optional full metrics.
 - Three application pages with verified catalog counts and concurrency statistics.
 - The scoring definition, evaluation protocol and interpretation of each metric.
@@ -55,7 +55,7 @@ Numbers are manually transcribed from the paper and validated; they are not reco
 - The overall score cannot be derived by averaging the displayed aggregate stage rates: its computation gates progress per fault.
 - Main rows average three applications. No per-application method results, raw time series, individual fault catalog or replay data is inferred.
 - The 700 catalog faults are distinct from the approximately 60 faults injected per main run.
-- The manuscript has anonymous authors. No acceptance, publication venue or institution is claimed.
+- Authors and BibTeX match arXiv:2609.33023. No conference acceptance or institution is claimed.
 
 ## Source structure
 

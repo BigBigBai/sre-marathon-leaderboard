@@ -65,7 +65,7 @@ function route() {
   if (page !== currentPage) {
     if (application != null) {
       const app = dataset.applications.find(item => item.id === application);
-      main.innerHTML = applicationView(app);
+      main.innerHTML = applicationView(app, config);
       document.title = `${app?.name || 'Application not found'} · SRE-Marathon`;
     } else {
       main.innerHTML = homeView(dataset, config);
@@ -110,7 +110,7 @@ try {
     route();
   });
 } catch (error) {
-  main.innerHTML = '<div class="error-box"><h1>Results could not be loaded.</h1><p id="load-error"></p><a class="btn" href="./sre-marathon-paper.pdf">Read the paper instead ↗</a></div>';
+  main.innerHTML = '<div class="error-box"><h1>Results could not be loaded.</h1><p id="load-error"></p><a class="btn" href="https://arxiv.org/pdf/2609.33023">Read the paper instead ↗</a></div>';
   document.getElementById('load-error').textContent = error.message;
   console.error(error);
 }

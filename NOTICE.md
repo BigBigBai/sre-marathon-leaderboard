@@ -6,7 +6,7 @@ The source for the current website's research claims, tabulated results and repr
 
 **SRE-Marathon: A Continuous, Change-Driven Benchmark for Autonomous Site Reliability Agents**
 
-Anonymous authors. No publication venue is specified on this site.
+The public bibliographic record is https://arxiv.org/abs/2609.33023. Website authors and citation follow that record; no conference acceptance is claimed.
 
 - Table 1: fault catalog counts.
 - Table 2: method/backbone results averaged over three applications.

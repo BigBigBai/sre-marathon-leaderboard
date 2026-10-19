@@ -10,7 +10,9 @@
     "catalogSource": {
       "table": 1,
       "pdfPage": 4
-    }
+    },
+    "arxivUrl": "https://arxiv.org/abs/2609.33023",
+    "paperUrl": "https://arxiv.org/pdf/2609.33023"
   },
   "notes": [
     "Transcribed from paper tables; not computed from raw runs.",
