@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { createStaticServer } from '../scripts/server.mjs';
 
 test('a Pages subdirectory resolves entry, data, images, lazy modules and manifest', async t => {
-  const server = createStaticServer(new URL('../dist/', import.meta.url).pathname, '/swe-marathon-leaderboard/');
+  const server = createStaticServer(new URL('../dist/', import.meta.url).pathname, '/sre-marathon-leaderboard/');
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => server.close(resolve)));
-  const base = `http://127.0.0.1:${server.address().port}/swe-marathon-leaderboard/`;
+  const base = `http://127.0.0.1:${server.address().port}/sre-marathon-leaderboard/`;
   const html = await (await fetch(base)).text();
   assert.ok(html.includes('./src/bootstrap.js'));
   for (const asset of ['src/bootstrap.js', 'src/site.config.json', 'assets/index-BMEz9I0h.js',

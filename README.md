@@ -24,9 +24,9 @@ npm run preview
 
 ## GitHub Pages
 
-目标仓库：https://github.com/BigBigBai/swe-marathon-leaderboard
+目标仓库：https://github.com/BigBigBai/sre-marathon-leaderboard
 
-目标网址：https://bigbigbai.github.io/swe-marathon-leaderboard/
+目标网址：https://bigbigbai.github.io/sre-marathon-leaderboard/
 
 1. 将本项目提交到仓库的 `main` 分支。
 2. 在仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。
