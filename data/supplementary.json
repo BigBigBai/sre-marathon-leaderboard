@@ -1,0 +1,66 @@
+{
+  "table7": [
+    {
+      "seed": "Shared",
+      "venue": "Single-host",
+      "correlation": 0.517,
+      "localization": 0.121,
+      "repair": 0.017,
+      "mttdSeconds": 231,
+      "mttlSeconds": 329,
+      "mttrSeconds": 709,
+      "risk": 0.136,
+      "marathonScore": 20.1
+    },
+    {
+      "seed": 17,
+      "venue": "Single-host",
+      "correlation": 0.203,
+      "localization": 0.034,
+      "repair": 0.051,
+      "mttdSeconds": 202,
+      "mttlSeconds": 625,
+      "mttrSeconds": 593,
+      "risk": 0.593,
+      "marathonScore": 7.3
+    },
+    {
+      "seed": 27,
+      "venue": "Multi-node",
+      "correlation": 0.455,
+      "localization": 0.073,
+      "repair": 0.018,
+      "mttdSeconds": 208,
+      "mttlSeconds": 324,
+      "mttrSeconds": 2486,
+      "risk": 0.25,
+      "marathonScore": 17.0
+    }
+  ],
+  "table8": [
+    {
+      "regime": "Short run, 5 faults",
+      "runs": 6,
+      "correlation": 0.8,
+      "localization": 0.2,
+      "repair": 0.5,
+      "marathonScore": 38.9
+    },
+    {
+      "regime": "Short run, 10 faults",
+      "runs": 6,
+      "correlation": 0.728,
+      "localization": 0.283,
+      "repair": 0.183,
+      "marathonScore": 34.8
+    },
+    {
+      "regime": "Marathon run, about 60 faults",
+      "runs": 3,
+      "correlation": 0.694,
+      "localization": 0.079,
+      "repair": 0.006,
+      "marathonScore": 25.4
+    }
+  ]
+}

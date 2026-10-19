@@ -1,25 +1,23 @@
-# Sources and modifications
+# Source attribution
 
-Original website: https://www.swe-marathon.org/
+## Research content
 
-Original benchmark repository: https://github.com/abundant-ai/swe-marathon
+The source for the current website's research claims, tabulated results and reproduced figures is the supplied manuscript:
 
-Original attribution: SWE-Marathon by Abundant AI and its credited contributors.
-The original website footer states “Open-source under Apache 2.0.” The benchmark
-repository's Apache 2.0 license is preserved in `vendor/UPSTREAM-LICENSE`.
-React and other third-party license comments embedded in the bundles are retained.
+**SRE-Marathon: A Continuous, Change-Driven Benchmark for Autonomous Site Reliability Agents**
 
-Snapshot date: 2026-10-19. Original files and hashes are recorded in `vendor/manifest.json`.
+Anonymous authors. Marked in the supplied PDF as under review at ICLR 2027.
 
-Modifications made for this independent replica:
+- Table 1: fault catalog counts.
+- Table 2: method/backbone results averaged over three applications.
+- Tables 7/8: supplementary seed and operating-pressure comparisons.
+- Figure 2: benchmark system overview.
+- Figure 6: published case-study timelines.
 
-- Separate editable benchmark JSON from the preserved rendering bundle.
-- Resolve assets, preloaded modules, and the web manifest relative to the deployment.
-- Read trajectories on demand from the original CORS-enabled origin.
-- Replace the original subscriber destination with an explicitly configured endpoint.
-- Add configurable metadata/contact information and a small mirror attribution.
-- Add dependency-free build, preview, validation and GitHub Pages deployment scripts.
+The PDF is preserved as supplied in `public/sre-marathon-paper.pdf`. Figure crops preserve their source content; captions on the website identify the figure and source page. Data is transcribed from the reported tables, including rounded values and missing entries. No new experimental results are claimed.
 
-The original evaluation results, author attributions, external references, and
-benchmark claims are reproduced as snapshot content. This project does not claim
-to have performed the original evaluations or to be the official SWE-Marathon site.
+The benchmark source link is reproduced from the paper. Site implementation and data provenance are documented separately in README.md.
+
+## Website history
+
+The original prototype reproduced the public SWE-Marathon website by Abundant AI. That prototype and its preserved license/source notices remain available in the repository history. The current frontend is an independent implementation that retains a similar restrained research-site layout, and no longer loads the SWE-Marathon application bundles, benchmark results, logos, trajectories, contact or subscription endpoints.

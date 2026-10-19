@@ -1,0 +1,41 @@
+[
+  {
+    "id": "astronomy-shop",
+    "name": "Astronomy Shop",
+    "services": 20,
+    "description": "The OpenTelemetry demo: a distributed e-commerce application with replicated instances across two Kubernetes zones.",
+    "environment": "Two-zone deployment with replication and failover; cross-zone interventions are visible in user-facing availability.",
+    "meanConcurrentFaults": 6.5,
+    "peakConcurrentFaults": 11,
+    "codeBug": 160,
+    "configBug": 35,
+    "chaosTest": 122,
+    "total": 317
+  },
+  {
+    "id": "online-boutique",
+    "name": "Online Boutique",
+    "services": 11,
+    "description": "A cloud-native retail application with checkout, payments, shipping, and product recommendations.",
+    "environment": "A live microservice deployment under continuous background traffic and the shared seeded marathon schedule.",
+    "meanConcurrentFaults": 5.8,
+    "peakConcurrentFaults": 10,
+    "codeBug": 32,
+    "configBug": 75,
+    "chaosTest": 66,
+    "total": 173
+  },
+  {
+    "id": "train-ticket",
+    "name": "Train Ticket",
+    "services": 41,
+    "description": "A railway booking application with a larger service topology and a broad set of operational failure surfaces.",
+    "environment": "A live microservice deployment under continuous background traffic and the shared seeded marathon schedule.",
+    "meanConcurrentFaults": 6.1,
+    "peakConcurrentFaults": 11,
+    "codeBug": 32,
+    "configBug": 93,
+    "chaosTest": 85,
+    "total": 210
+  }
+]

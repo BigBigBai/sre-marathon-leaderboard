@@ -1,0 +1,34 @@
+{
+  "source": {
+    "pdf": "4246_SRE_Marathon_A_Continuous.pdf",
+    "title": "SRE-Marathon: A Continuous, Change-Driven Benchmark for Autonomous Site Reliability Agents",
+    "statusAsPrinted": "Under review as a conference paper at ICLR 2027",
+    "authorsAsPrinted": "Anonymous authors",
+    "leaderboardSource": {
+      "table": 2,
+      "pdfPage": 7
+    },
+    "catalogSource": {
+      "table": 1,
+      "pdfPage": 4
+    }
+  },
+  "notes": [
+    "Transcribed from paper tables; not computed from raw runs.",
+    "Each leaderboard row reports the paper average over three applications.",
+    "Token counts are rounded in the paper; expanded integers retain that approximate precision.",
+    "Null preserves a dash in the source table and must not be displayed as zero.",
+    "Marathon-Score is lifecycle-gated and cannot be recomputed by averaging aggregate Corr/Loc/Rep."
+  ],
+  "protocol": {
+    "faultsPerRunApprox": 60,
+    "injectionMinutes": 60,
+    "observationMinutes": 30,
+    "nominalTotalMinutes": 90,
+    "actualDurationCanDrift": true,
+    "invocationIntervalSeconds": 120,
+    "invocationBudgetSeconds": 110,
+    "instrumentedTools": 19,
+    "alertRules": 44
+  }
+}

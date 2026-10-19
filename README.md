@@ -1,17 +1,18 @@
-# SWE-Marathon leaderboard replica
+# SRE-Marathon
 
-对 https://www.swe-marathon.org/ 的可部署前端快照复刻，采集于 2026-10-19。
-保留原站布局、字体、图片、交互、v1.0/v1.1 榜单、任务详情、统计图表与运行轨迹页面。
+A project website for **SRE-Marathon: A Continuous, Change-Driven Benchmark for Autonomous Site Reliability Agents**, based on the supplied anonymous ICLR 2027 submission.
 
-## 本地运行
+Website: https://bigbigbai.github.io/sre-marathon-leaderboard/
 
-需要 Node.js 22 或更高版本，无需安装 npm 依赖。
+## Run locally
+
+Requires Node.js 22 or later. No npm installation or runtime service is required.
 
 ```sh
 npm run dev
 ```
 
-打开 http://localhost:5173/ 。编辑数据或集成层后，重新启动此命令并刷新浏览器。
+Open http://localhost:5173/ . Restart the command after editing source or data to rebuild, then refresh.
 
 ```sh
 npm run build
@@ -20,67 +21,60 @@ npm test
 npm run preview
 ```
 
-`dist/` 是构建产物，不提交到 Git；GitHub Actions 会重新生成。
+## What is included
 
-## GitHub Pages
+- A project homepage, paper download and benchmark code link.
+- All 19 Table 2 configurations, with backbone/search filters, numeric sorting, and optional full metrics.
+- Three application pages with verified catalog counts and concurrency statistics.
+- The scoring definition, evaluation protocol and interpretation of each metric.
+- Interactive lifecycle and cost/score views from Table 2 aggregates.
+- Tables 7/8 shown separately as seed and operating-pressure comparisons.
+- Two paper figures and the case-study narratives from Section 5.3.
+- Keyboard access, light/dark themes and responsive layouts.
 
-目标仓库：https://github.com/BigBigBai/sre-marathon-leaderboard
+## Data and provenance
 
-目标网址：https://bigbigbai.github.io/sre-marathon-leaderboard/
+| File | Content | Paper source |
+| --- | --- | --- |
+| `data/benchmark.json` | Paper title, status, notes and protocol | Sections 2–4 |
+| `data/leaderboard.json` | 19 reported configurations | Table 2, page 7 |
+| `data/applications.json` | App descriptions, catalog sizes and concurrency | Table 1, page 4; Sections 2/4 |
+| `data/supplementary.json` | Seed and load-regime results | Tables 7/8, page 20 |
+| `public/sre-marathon-paper.pdf` | Supplied anonymous manuscript | Original file |
+| `public/assets/system-overview.png` | System architecture | Figure 2, page 3 |
+| `public/assets/case-comparison.png` | Published case timelines | Figure 6, page 9 |
 
-1. 将本项目提交到仓库的 `main` 分支。
-2. 在仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。
-3. 打开 **Actions → Deploy leaderboard to GitHub Pages** 查看运行结果。
-4. 后续推送到 `main` 会自动校验、构建和部署。
+Numbers are manually transcribed from the paper and validated; they are not recomputed from raw experimental bundles. `leaderboard.json` is the source for the table and both interactive analysis views.
 
-如果更换仓库或绑定域名，更新 `src/site.config.json` 的 `publicUrl`。
-资源使用相对路径，详情页使用原站 Hash 路由，支持 Pages 项目子目录及刷新。
+- `marathonScore` is a score from 0 to 100, **not** a repair percentage.
+- `correlation`, `localization`, `repair` and `risk` are stored as ratios in `[0,1]`; the UI displays percentages.
+- `mttdSeconds`, `mttlSeconds`, `mttrSeconds` are paper-reported medians over successfully reaching faults. They can be unordered.
+- `degradationLevelPct` is relative to paired no-action runs and can exceed 100.
+- `costUsdPerRun` is experimental USD cost; `tokensPerRun` is approximate because the paper rounds token counts.
+- `null` preserves a source-table dash. It is never substituted with zero.
+- The overall score cannot be derived by averaging the displayed aggregate stage rates: its computation gates progress per fault.
+- Main rows average three applications. No per-application method results, raw time series, individual fault catalog or replay data is inferred.
+- The 700 catalog faults are distinct from the approximately 60 faults injected per main run.
+- The manuscript is marked as under review, with anonymous authors. No acceptance or institution is claimed.
 
-## 内容与数据维护
+## Source structure
 
-| 路径 | 用途 |
-| --- | --- |
-| `src/site.config.json` | 浏览器标题、页面描述、公开网址、日志来源、联系邮箱、订阅地址 |
-| `src/bootstrap.js` | 数据读取、资产路径适配、启动和加载失败处理 |
-| `src/replica.css` | 额外样式；原站样式保持完整 |
-| `data/v1.1/leaderboard.json` | 当前总榜，按显示顺序维护；`pass1` 使用 0–100 的百分数 |
-| `data/v1.1/tasks.json` | 当前任务列表、分类及任务级成绩 |
-| `data/v1.1/taskDetails.json` | 任务说明、环境、验证器、单任务榜单与精选轨迹 |
-| `data/v1.1/trialById.json` | 运行详情页使用的运行记录索引 |
-| `data/v1.1/metadata.json` | 首屏统计、类别、模型颜色、任务来源等 |
-| `data/v1.0/` | 相同结构的历史归档 |
-| `vendor/site/` | 未改动的上游构建文件、图标与图片 |
-| `vendor/manifest.json` | 原始文件来源、大小与 SHA-256 校验值 |
-| `scripts/build.mjs` | Pages 路径适配与订阅处理等构建补丁 |
+- `src/index.html`: document shell, navigation, metadata and footer.
+- `src/main.js`: startup, filters, sorting, theme, citation and hash routing.
+- `src/views.js`: project sections, tables and chart markup.
+- `src/model.js`: formatting, filtering, ordering and input validation.
+- `src/styles.css`: site styles, themes and responsive rules.
+- `src/site.config.json`: public URL, project description and resource links.
+- `scripts/build.mjs`: clean static build into `dist/`.
+- `scripts/check.mjs`: data, module, deployment-asset and stale-content checks.
+- `tests/`: numerical/formatting/filter regressions and Pages subdirectory HTTP checks.
 
-更新成绩时，需要同时维护总榜、任务榜、运行索引和首屏统计；此版本没有重新运行评测、
-自动计算排行榜或自动同步原站。统计分析页面中的图表数据仍保存在上游页面模块中。
+Application pages use `#application/astronomy-shop`, `#application/online-boutique` and `#application/train-ticket`, which work on GitHub Pages without server routing. In-page sections use ordinary hash anchors.
 
-为了忠实复刻，页面标题、简介、作者、论文、GitHub 链接及评测内容默认保留原站信息。
-配置的 `title` 修改浏览器标题；页面内品牌、作者与文案仍来自快照。
+## Deploy
 
-## 轨迹、演示与订阅
+Push to `main`. `.github/workflows/deploy.yml` builds, validates, tests, uploads `dist/` and deploys to GitHub Pages. Repository Settings → Pages should use **GitHub Actions**.
 
-- 运行轨迹 JSON 按需从 `trajectoryOrigin` 加载，默认使用原站；已验证该来源允许跨域请求。
-  原站首屏标注的数百 GB 日志没有下载或包含在本仓库中。
-- 原站本身未提供日志的运行仍保留原站的不可用状态，不生成虚构日志。
-- 独立托管轨迹时，可将日志按 `trajectories/...` 目录放在 `vendor/site/`，
-  并把 `trajectoryOrigin` 设为 `""`；也可以设置支持 CORS 的自有对象存储来源。
-- 产品演示仍指向原站运行的外部服务，依赖它们的可用性。字体默认使用 Google Fonts。
-- 订阅表单默认不发送任何信息。提交时提示未配置；将 `subscriptionEndpoint`
-  配置为你自己的兼容 JSON 接口后启用，POST 内容为 `{email, interest: "news-events"}`。
-- `contactEmail` 留空时保留原作者联系链接；填入自己的邮箱即可替换。
+All assets, data and the paper are hosted locally. The anonymous benchmark repository link is reproduced from the manuscript; this website repository is a separate implementation.
 
-## 快照与许可
-
-这是对公开网页构建产物的复刻，**不是上游未公开的 React/TypeScript 源码工程**。
-页面渲染逻辑保留在上游模块中；数据与适配层已拆开供编辑。需要大幅改版时，建议逐步将
-相关页面重写为独立组件，而不是直接编辑压缩文件。
-
-上游网页署名为 Abundant AI，并标注 Apache 2.0。`vendor/UPSTREAM-LICENSE`
-保留上游 GitHub 仓库的许可文本，`NOTICE.md` 记录来源和本项目改动。
-原作者署名保留，页面底部增加独立复刻链接。品牌标识及外部资源不因本项目获得新的授权。
-
-`python3 scripts/snapshot.py` 会补齐缺失的公开展示资源并更新校验清单，不下载轨迹归档。
-`npm run export-data` 从固定上游模块重新导出数据，会覆盖本地 JSON 修改；日常维护无需执行。
-更新上游版本时应先人工核对构建入口、模块名称和补丁标记，再更新脚本并验收。
+The initial SWE-Marathon replica remains in Git history. Its results, team list, source bundles and remote log/demo integrations are no longer part of the current deployment. Do not rerun the old snapshot/export scripts from previous commits on the new data.
