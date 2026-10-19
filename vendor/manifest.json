@@ -1,0 +1,131 @@
+{
+  "origin": "https://www.swe-marathon.org",
+  "capturedOn": "2026-10-19",
+  "files": [
+    {
+      "path": "apple-touch-icon.png",
+      "bytes": 23380,
+      "sha256": "631cdf23ad815a57ef0b914866f27c019bb2838fd62f03292160d0bedd9e2679"
+    },
+    {
+      "path": "assets/analysis-DuIku1ZK.js",
+      "bytes": 51565,
+      "sha256": "f806fa9582787cc662667ffafa19f490c2a64112bb08b43df9ae993ad170941c"
+    },
+    {
+      "path": "assets/astra-stats-CKa6tc11.js",
+      "bytes": 2027,
+      "sha256": "ba38455184bc106343650174aeff4fb969999a16e9b30031720c4aa3d8f21627"
+    },
+    {
+      "path": "assets/claude5-stats-CWEaJ6_v.js",
+      "bytes": 3209,
+      "sha256": "719ccbe1753c0356cb35b9a0b55f65e6321d2d3dc76678ec8e185d69aff3fecc"
+    },
+    {
+      "path": "assets/gpt56-stats-C82dffFf.js",
+      "bytes": 10850,
+      "sha256": "5d6cbe1361fb97dc6f1102f65678638c4c1683b4f198840a85b4c84f37c055e3"
+    },
+    {
+      "path": "assets/index-BMEz9I0h.js",
+      "bytes": 5988846,
+      "sha256": "a5e99154c6361e0b050641d540e10ad4a07c84287d060da1623aa221bc4bce8b"
+    },
+    {
+      "path": "assets/index-CeKyvvaO.css",
+      "bytes": 73077,
+      "sha256": "321ccf23d2f6f608b454c44d3a16cd13c114d54f7606069c5b39c72cf2a4c5f7"
+    },
+    {
+      "path": "assets/installCanvasRenderer-VQkYRJvL.js",
+      "bytes": 479628,
+      "sha256": "e63b083fd179c98f5978129cf178a153b508d7a26577534b02dc2c2a4095c48d"
+    },
+    {
+      "path": "assets/logos/abundant-mark.png",
+      "bytes": 4028,
+      "sha256": "393f76e8aed7c29ff07c613a5088934be1dbc849a591d544577b4939669fc398"
+    },
+    {
+      "path": "assets/logos/abundant-wordmark.png",
+      "bytes": 61563,
+      "sha256": "20563f1f18a62bd65f3d28e9670c299c598b3b06f02970bd95d9981a5c923016"
+    },
+    {
+      "path": "assets/logos/amazon-s3.svg",
+      "bytes": 2010,
+      "sha256": "b92c5101cc6565dd12df37655802279f8fba0c719279f62f93106d26750b36c6"
+    },
+    {
+      "path": "assets/logos/kimi-icon.png",
+      "bytes": 183868,
+      "sha256": "242ec4882a113fa27b7757af4bcc157273aeb86b92fe17cd81b23f3041c33d1b"
+    },
+    {
+      "path": "assets/logos/meta.svg",
+      "bytes": 2196,
+      "sha256": "19eebfaf7dc21c04d28862755e56fd41892478c07d6a6f92fb7cd0599e99a3c5"
+    },
+    {
+      "path": "assets/logos/microsoft-excel.png",
+      "bytes": 1387,
+      "sha256": "25847181646d57146e37d5368c8c5799efde8634f8bf75c7a3eea2d98acbbc70"
+    },
+    {
+      "path": "assets/logos/minimax-vertical.svg",
+      "bytes": 8741,
+      "sha256": "ee718e69bd5127e1ac2b69894e643b643eca3a21c58b8b23e75f3e31b13ffad8"
+    },
+    {
+      "path": "assets/logos/slack.png",
+      "bytes": 5253,
+      "sha256": "fff0ab554a4dc202afd1cbf2033a3ad340cf25b4991035d2d31407b5e7e4c366"
+    },
+    {
+      "path": "assets/logos/stripe.png",
+      "bytes": 4885,
+      "sha256": "07388221031b8343dca08798e4c7ef4132fca5539f1ebe709e7d50ae9d6e3c0e"
+    },
+    {
+      "path": "assets/logos/z-ai.png",
+      "bytes": 19722,
+      "sha256": "9b5bc9ed8795918e7c90d259c46d2d18e7a2e7431f5faed60eb49f0d6e15e700"
+    },
+    {
+      "path": "benchmark-horizons.svg",
+      "bytes": 105429,
+      "sha256": "81fb87975876337ba4526d0cb5bea61d31e11efbe697e16d067a0223ac6af2bd"
+    },
+    {
+      "path": "favicon.png",
+      "bytes": 3763,
+      "sha256": "d14b52007134f757272a12263e8341c4cdca1631522f301d3e8e00f15edf08e0"
+    },
+    {
+      "path": "icon-192.png",
+      "bytes": 25196,
+      "sha256": "b0eb1e8407aa1b13f943eaad942dd9bc1ef7b5f701f2990dbdf90ac437f43de4"
+    },
+    {
+      "path": "icon-512.png",
+      "bytes": 91034,
+      "sha256": "df7a00605cb4a34af3a20bb1fc481646ad8aac367c1acd7584b7073f618f50bd"
+    },
+    {
+      "path": "index.html",
+      "bytes": 4714,
+      "sha256": "8bee5c3bbe68e574564a9aabd6137d475b71a919151166996727f902a440382e"
+    },
+    {
+      "path": "og-image-staircase-20260605.png",
+      "bytes": 111882,
+      "sha256": "f0a72617ecc1728d539da5f49bf3ab46d92d29c09469f8c5da84d38c12173a53"
+    },
+    {
+      "path": "site.webmanifest",
+      "bytes": 553,
+      "sha256": "4fd9ffa794f4a95befca4aac3e950b115f1666f2a0b388aec4b5dddcbad17bac"
+    }
+  ]
+}

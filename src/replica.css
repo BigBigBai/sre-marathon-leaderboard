@@ -1,0 +1,4 @@
+.mirror-credit{padding:16px 24px;border-top:1px solid var(--rule);font:11px var(--sans);color:var(--ink-3);text-align:center;background:var(--bg)}
+.mirror-credit a{color:inherit;text-decoration:none}
+.mirror-credit a:hover{text-decoration:underline}
+#root:empty::before{content:"Loading SWE-Marathon…";display:block;padding:12vh 8vw;font:14px Inter,system-ui,sans-serif;color:#71717a}
