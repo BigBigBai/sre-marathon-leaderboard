@@ -1,0 +1,23 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "sre-marathon-analytics",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-20",
+  "workers_dev": true,
+  "vars": {
+    "ALLOWED_ORIGIN": "https://bigbigbai.github.io",
+    "COLLECTION_ENABLED": "true"
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "sre-marathon-analytics",
+    "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+    "migrations_dir": "migrations"
+  }],
+  "ratelimits": [
+    { "name": "IP_LIMITER", "namespace_id": "2609330231", "simple": { "limit": 60, "period": 60 } },
+    { "name": "GLOBAL_LIMITER", "namespace_id": "2609330232", "simple": { "limit": 600, "period": 60 } }
+  ],
+  "triggers": { "crons": ["17 3 * * *"] },
+  "observability": { "enabled": false }
+}

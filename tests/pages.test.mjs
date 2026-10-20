@@ -9,7 +9,7 @@ test('Pages project path serves the new site, paper, charts and data without leg
   const html = await (await fetch(base)).text();
   assert.ok(html.includes('./src/main.js'));
   assert.ok(html.includes('<title>SRE-Marathon</title>'));
-  for (const name of ['main.js', 'views.js', 'model.js', 'theme-init.js', 'styles.css', 'site.config.json']) {
+  for (const name of ['main.js', 'views.js', 'model.js', 'theme-init.js', 'styles.css', 'site.config.json', 'analytics.js', 'privacy.js']) {
     const response = await fetch(new URL(`src/${name}`, base));
     assert.equal(response.status, 200, name); await response.arrayBuffer();
   }
@@ -21,6 +21,11 @@ test('Pages project path serves the new site, paper, charts and data without leg
   for (const name of ['assets/system-overview.png', 'assets/case-comparison.png', 'sre-marathon-paper.pdf']) {
     const response = await fetch(new URL(name, base));
     assert.equal(response.status, 200); await response.arrayBuffer();
+  }
+  assert.equal((await fetch(new URL('privacy.html', base))).status, 200);
+  // Backend source, configuration, dependencies and SQL never ship to Pages.
+  for (const name of ['analytics/worker.mjs', 'analytics/wrangler.jsonc', 'analytics/queries.sql', 'analytics/package.json']) {
+    assert.equal((await fetch(new URL(name, base))).status, 404);
   }
   assert.equal((await fetch(new URL('data/v1.1/leaderboard.json', base))).status, 404);
   assert.equal((await fetch(new URL('assets/index-BMEz9I0h.js', base))).status, 404);

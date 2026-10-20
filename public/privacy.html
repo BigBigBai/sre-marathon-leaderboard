@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Privacy & analytics · SRE-Marathon</title>
+  <link rel="icon" href="./favicon.svg"><script src="./src/theme-init.js"></script>
+  <link rel="stylesheet" href="./src/styles.css"><script type="module" src="./src/privacy.js"></script>
+</head>
+<body><main class="container app-detail">
+  <a class="back-link" href="./">← SRE-Marathon</a><h1>Privacy & analytics</h1>
+  <p>We use first-party project analytics to understand interest in this benchmark and improve its website. When enabled, a Cloudflare Worker receives events and stores them in a private Cloudflare D1 database.</p>
+  <h2>What is recorded</h2>
+  <p>Page views, approximate country, device and browser category, referring website, campaign parameters, foreground time, scroll depth, and selected interactions: paper and code links, leaderboard filters and sorting, chart changes, and successful citation copies. Search text is never sent.</p>
+  <p>A random browser identifier is stored in localStorage and a session identifier in sessionStorage. These estimate browsers and return visits; they do not identify a person. We do not use browser fingerprinting. Clearing storage or using another browser changes the identifier.</p>
+  <p>We do not save raw IP addresses, full browsing URLs, arbitrary query strings, or form inputs in the analytics database. IP addresses are processed transiently for rate limiting. Cloudflare processes requests to provide the service. Optional utm_source, utm_medium, utm_campaign, utm_term and utm_content parameters are saved; do not include personal information in campaign links.</p>
+  <p>Detailed events are kept for 90 days; daily aggregate counts are retained longer. Data is accessible through the project owner's Cloudflare account and is not published in the repository. Foreground time and clicks indicate activity, not confirmed reading or downloads.</p>
+  <h2>Your choices</h2>
+  <p>Do Not Track and Global Privacy Control signals disable collection. You can also disable analytics for this browser below. Local previews and this privacy page are not tracked.</p>
+  <p id="analytics-status" role="status">Checking analytics settings…</p>
+  <div class="actions" style="justify-content:flex-start"><button class="btn" id="disable-analytics">Disable analytics</button><button class="btn" id="enable-analytics">Allow analytics</button></div>
+  <h2>Project owner testing</h2>
+  <p>Mark this browser as the owner to exclude future activity from ordinary visitor reports. This is a self-declared classification, not a login or permission to read data. Existing records are unchanged.</p>
+  <p id="owner-status" role="status"></p>
+  <div class="actions" style="justify-content:flex-start"><button class="btn" id="mark-owner">Mark this browser as owner</button><button class="btn" id="clear-owner">Remove owner mark</button></div>
+</main></body></html>

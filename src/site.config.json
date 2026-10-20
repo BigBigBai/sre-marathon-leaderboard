@@ -4,7 +4,10 @@
   "publicUrl": "https://bigbigbai.github.io/sre-marathon-leaderboard/",
   "sourceRepository": "https://github.com/BigBigBai/sre-marathon-leaderboard",
   "benchmarkRepository": "https://anonymous.4open.science/r/SRE-Marathon-12321/",
-  "authors": "Yifang Tian \u00b7 Yingjian Bai \u00b7 Yifeng He \u00b7 Zichun Chong \u00b7 Yuanchen Gao \u00b7 Yiran Li \u00b7 Hans-Arno Jacobsen",
+  "authors": "Yifang Tian · Yingjian Bai · Yifeng He · Zichun Chong · Yuanchen Gao · Yiran Li · Hans-Arno Jacobsen",
   "paperUrl": "https://arxiv.org/pdf/2609.33023",
-  "arxivUrl": "https://arxiv.org/abs/2609.33023"
+  "arxivUrl": "https://arxiv.org/abs/2609.33023",
+  "analytics": {
+    "endpoint": "https://sre-marathon-analytics.sre-marathon-leaderboard.workers.dev/collect"
+  }
 }

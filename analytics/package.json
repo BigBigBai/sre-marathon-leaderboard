@@ -1,0 +1,16 @@
+{
+  "name": "sre-marathon-analytics",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "login": "wrangler login --scopes account:read user:read workers:write workers_scripts:write d1:write",
+    "whoami": "wrangler whoami",
+    "db:create": "wrangler d1 create sre-marathon-analytics",
+    "db:migrate": "wrangler d1 migrations apply sre-marathon-analytics --remote --config wrangler.jsonc",
+    "deploy": "wrangler deploy --config wrangler.jsonc",
+    "dev": "wrangler dev --config wrangler.jsonc",
+    "validate": "wrangler deploy --dry-run --config wrangler.example.jsonc"
+  },
+  "devDependencies": { "wrangler": "4.151.3" },
+  "engines": { "node": ">=22.13.0" }
+}

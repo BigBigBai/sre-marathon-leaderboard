@@ -2,3 +2,10 @@ dist/
 node_modules/
 .DS_Store
 *.log
+
+# Local Cloudflare configuration, credentials, state and analytics exports
+analytics/wrangler.jsonc
+.wrangler/
+analytics/.dev.vars*
+analytics/.env*
+analytics/exports/

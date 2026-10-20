@@ -6,7 +6,7 @@ Website: https://bigbigbai.github.io/sre-marathon-leaderboard/
 
 ## Run locally
 
-Requires Node.js 22 or later. No npm installation or runtime service is required.
+Requires Node.js 22.13 or later. No npm installation or runtime service is required.
 
 ```sh
 npm run dev
@@ -78,3 +78,11 @@ Push to `main`. `.github/workflows/deploy.yml` builds, validates, tests, uploads
 All assets, data and the paper are hosted locally. The anonymous benchmark repository link is reproduced from the manuscript; this website repository is a separate implementation.
 
 The initial SWE-Marathon replica remains in Git history. Its results, team list, source bundles and remote log/demo integrations are no longer part of the current deployment. Do not rerun the old snapshot/export scripts from previous commits on the new data.
+
+## Private project analytics
+
+The website includes an optional event collector for pageviews, paper/code clicks, leaderboard interactions and citation copies. Configure the public Worker URL in `src/site.config.json` → `analytics.endpoint`; an empty value disables collection.
+
+The separate Cloudflare Worker and D1 database live in `analytics/`; deployment instructions, reporting SQL, retention rules and shutdown steps are in [analytics/README.md](analytics/README.md). The website keeps its existing GitHub Pages hosting. Cloudflare tooling has its own pinned dependencies in `analytics/package.json` and is not included in the static website.
+
+Visitors can disable collection in `privacy.html`; DNT/GPC are respected. The same page can mark your browser as owner, excluding future views from ordinary reports. No raw IP or search text is saved in the analytics database.

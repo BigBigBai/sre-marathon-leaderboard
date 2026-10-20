@@ -1,3 +1,4 @@
+import { createAnalytics } from './analytics.js';
 import { selectRows, validateData } from './model.js';
 import { homeView, leaderboardView, stagesView, costView, supplementaryView, applicationView, citation } from './views.js';
 
@@ -5,6 +6,8 @@ const main = document.getElementById('main');
 const state = { backbone: 'all', query: '', sort: 'marathonScore', direction: 'desc', fullMetrics: false, analysis: 'stages', analysisBackbone: 'kimi-k2.5' };
 let dataset, config;
 let currentPage = '';
+let analytics = { page() {}, action() {} };
+let searchTracked = false;
 
 async function readJSON(url) {
   const response = await fetch(url);
@@ -27,6 +30,7 @@ async function copyCitation() {
   try {
     await navigator.clipboard.writeText(citation);
     status.textContent = 'Citation copied.';
+    analytics.action('citation', 'copied');
   } catch {
     const selection = window.getSelection();
     const range = document.createRange();
@@ -40,19 +44,20 @@ function bindHome() {
   document.getElementById('backbone-filter').value = state.backbone;
   document.getElementById('method-search').value = state.query;
   document.getElementById('analysis-backbone').value = state.analysisBackbone;
-  document.getElementById('backbone-filter').addEventListener('change', event => { state.backbone = event.target.value; renderLeaderboard(); });
-  document.getElementById('method-search').addEventListener('input', event => { state.query = event.target.value; renderLeaderboard(); });
-  document.getElementById('metrics-toggle').addEventListener('click', () => { state.fullMetrics = !state.fullMetrics; renderLeaderboard(); });
+  document.getElementById('backbone-filter').addEventListener('change', event => { state.backbone = event.target.value; renderLeaderboard(); analytics.action('backbone', state.backbone); });
+  document.getElementById('method-search').addEventListener('input', event => { state.query = event.target.value; renderLeaderboard(); if (state.query && !searchTracked) { searchTracked = true; analytics.action('search', 'used'); } });
+  document.getElementById('metrics-toggle').addEventListener('click', () => { state.fullMetrics = !state.fullMetrics; renderLeaderboard(); analytics.action('metrics', state.fullMetrics ? 'expanded' : 'collapsed'); });
   document.getElementById('leaderboard-table').addEventListener('click', event => {
     const button = event.target.closest('[data-sort]');
     if (!button) return;
     state.direction = state.sort === button.dataset.sort ? (state.direction === 'asc' ? 'desc' : 'asc') : button.dataset.preferred;
     state.sort = button.dataset.sort;
+    analytics.action('sort', state.sort);
     renderLeaderboard();
     document.querySelector(`[data-sort="${state.sort}"]`)?.focus({ preventScroll: true });
   });
-  document.getElementById('analysis-backbone').addEventListener('change', event => { state.analysisBackbone = event.target.value; renderAnalysis(); });
-  document.querySelectorAll('[data-analysis]').forEach(button => button.addEventListener('click', () => { state.analysis = button.dataset.analysis; renderAnalysis(); }));
+  document.getElementById('analysis-backbone').addEventListener('change', event => { state.analysisBackbone = event.target.value; renderAnalysis(); analytics.action('analysis_backbone', state.analysisBackbone); });
+  document.querySelectorAll('[data-analysis]').forEach(button => button.addEventListener('click', () => { state.analysis = button.dataset.analysis; renderAnalysis(); analytics.action('analysis', state.analysis); }));
   document.getElementById('copy-citation').addEventListener('click', copyCitation);
   renderLeaderboard();
   renderAnalysis();
@@ -76,6 +81,7 @@ function route() {
   }
   if (application != null) window.scrollTo({ top: 0, behavior: 'instant' });
   else if (hash) document.getElementById(hash)?.scrollIntoView({ behavior: 'instant', block: 'start' });
+  analytics.page(page);
 }
 const themeButton = document.getElementById('theme-toggle');
 function syncTheme() {
@@ -97,6 +103,12 @@ try {
   config = settings;
   dataset = Object.fromEntries(names.map((name, index) => [name, values[index]]));
   validateData(dataset);
+  try {
+    analytics = createAnalytics({ endpoint: config.analytics?.endpoint, siteUrl: config.publicUrl, links: {
+      paper_pdf: config.paperUrl, paper_abstract: config.arxivUrl, benchmark_code: config.benchmarkRepository,
+      website_source: config.sourceRepository, results_json: './data/leaderboard.json',
+    } });
+  } catch { /* Statistics must never prevent the website from loading. */ }
   route();
   window.addEventListener('hashchange', route);
   window.addEventListener('popstate', route);
