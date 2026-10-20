@@ -124,3 +124,27 @@ GROUP BY browser ORDER BY pageviews DESC;
 SELECT datetime(occurred_at/1000,'unixepoch') AS started_utc,page,session_id,page_sequence,
        previous_page,ROUND(active_ms/1000.0) AS foreground_seconds,scroll_pct
 FROM owner_visits ORDER BY occurred_at DESC LIMIT 50;
+
+-- Latest retained visitor access records, with initial IP/location snapshot.
+-- started_utc is browser time; last_received_utc is the server's latest heartbeat receipt.
+-- IP/region/city stay NULL for records created before network collection was enabled.
+SELECT visitor_id,session_id,page,ip,country,region,city,
+       datetime(occurred_at/1000,'unixepoch') AS started_utc,
+       datetime(received_at/1000,'unixepoch') AS last_received_utc
+FROM other_visits ORDER BY occurred_at DESC LIMIT 100;
+
+-- Country/region/city distribution over the last 30 days (NULL or an empty country means unavailable).
+SELECT country,region,city,COUNT(*) AS pageviews,
+       COUNT(DISTINCT visitor_id) AS known_browsers
+FROM events WHERE type='page' AND is_owner=0
+  AND occurred_at >= (unixepoch('now')-30*86400)*1000
+GROUP BY country,region,city ORDER BY pageviews DESC;
+
+-- IP/location combinations over the last 30 days. IP addresses do not identify people.
+SELECT ip,country,region,city,COUNT(*) AS pageviews,
+       COUNT(DISTINCT visitor_id) AS known_browsers,
+       datetime(MIN(occurred_at)/1000,'unixepoch') AS first_observed_utc,
+       datetime(MAX(received_at)/1000,'unixepoch') AS last_received_utc
+FROM events WHERE type='page' AND is_owner=0 AND ip IS NOT NULL
+  AND occurred_at >= (unixepoch('now')-30*86400)*1000
+GROUP BY ip,country,region,city ORDER BY pageviews DESC;

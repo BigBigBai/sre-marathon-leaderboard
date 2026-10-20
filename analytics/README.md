@@ -20,8 +20,8 @@ The resource IDs are in your ignored local `wrangler.jsonc`; recover them using 
 - Page heartbeats update the same event ID with the maximum cumulative foreground milliseconds and scroll percentage. Duplicate and out-of-order uploads do not inflate pageviews, time or depth.
 - `action`: paper/PDF/code/results links; section navigation; backbone filter; sort column; full-metrics toggle; chart/backbone choice; search use (once per document, no text); successful clipboard copy.
 - A random localStorage browser ID approximates browsers, not people. A sessionStorage session renews after 30 minutes without recorded activity. Visible page heartbeats count as activity. Tabs normally have separate sessions, but browsers may copy sessionStorage when duplicating tabs. First/returning classification is a browser-local signal, not verified identity.
-- Device/browser categories and approximate country are derived on the Worker. Referrers retain only the hostname. Only the five named `utm_*` values are retained, each capped at 128 characters. Never place personal information in campaign values.
-- Raw IP addresses, raw user agents, arbitrary URLs, arbitrary query parameters and search text are not written to D1. Cloudflare processes the network request; IP is transiently used as a rate-limit key. Worker request observability is disabled in the deployment template.
+- Connection IP and approximate country, region/state and city come from Cloudflare on the Worker; device/browser categories are derived there as well. Referrers retain only the hostname. Only the five named `utm_*` values are retained, each capped at 128 characters. Never place personal information in campaign values.
+- New event records store the connection IP from `CF-Connecting-IP` and country/region/city from `request.cf`. JSON fields and `X-Forwarded-For` are never trusted for these values. IPv4 and IPv6 are supported; unavailable/invalid IP, region and city values remain NULL (missing country retains the existing empty-string representation). IP is also used for rate limiting. Raw user agents, arbitrary URLs, arbitrary query parameters and search text are not written to D1. Worker request observability stays disabled; network data is not included in logs or public responses.
 - Storage refusal is supported: collection can continue with a null browser ID and null return classification. Local previews, the privacy page, DNT/GPC browsers and opted-out browsers do not collect.
 - Visibility loss/pagehide attempts a best-effort beacon. Timer deltas are capped at 60 seconds to limit sleep inflation. Background time is excluded. Network loss, blockers, browser termination or quota exhaustion can lose events; time is activity, not proof of reading, and clicks do not prove a completed download.
 - The queue is memory-only, bounded to 200 pending records, sent in batches of at most 20. It retries transient failures; event IDs deduplicate retries. Hidden tabs may be suspended by the browser.
@@ -143,6 +143,18 @@ npx wrangler d1 execute sre-marathon-analytics --remote --config wrangler.jsonc 
 ```
 
 All timestamps/daily summaries use UTC. Browser counts exclude null IDs. Daily unique browsers/sessions cannot be summed to get period uniques: use `COUNT(DISTINCT ...)` over retained detail for a whole period. Referrer and campaign reports count pageviews. Summaries are for closed days and appear after the nightly cron.
+
+## IP, access times and approximate location
+
+Migration `0003_ip_and_location.sql` adds nullable `ip`, `region` and `city` fields; `country`, `occurred_at` and `received_at` already exist. Apply it before deploying the updated Worker. Publish the updated privacy notice before enabling network-data collection. No browser permissions, client-side IP lookup, or third-party geolocation API is needed.
+
+The IP/location snapshot describes the request that first inserted an event. Heartbeat updates change only cumulative time/depth and last receipt time, preserving the initial network snapshot. Events created before this upgrade keep NULL IP/region/city even if a later heartbeat arrives; historical data is not backfilled. A new event is recorded using its incoming connection, so later pages/actions can reflect a different network.
+
+`occurred_at` is the browser's page/action start time, subject to clock differences; `received_at` is the server's latest receipt time (updated on page heartbeats). Ready-to-run SQL displays both in UTC. `queries.sql` adds the latest visitor access records, country/region/city distribution, and IP/location counts. Random browser IDs remain the basis for browser metrics; IP counts are not unique-person counts.
+
+Locations are Cloudflare's approximate IP-based estimates, can be missing, and may reflect a shared network, VPN/proxy exit or Worker subrequest. No browser geolocation permission is requested. Detailed IP/location data is accessible only through your authenticated Cloudflare D1 tools, follows the same 90-UTC-days-plus-today retention window, and is not included in permanent daily aggregates, repository files, or public endpoints. Export only to the ignored `analytics/exports/` directory.
+
+Official field references: [Request connection metadata](https://developers.cloudflare.com/workers/runtime-apis/request/#incomingrequestcfproperties) and [CF-Connecting-IP](https://developers.cloudflare.com/fundamentals/reference/http-headers/#cf-connecting-ip).
 
 ## Retention, quotas and shutdown
 

@@ -85,6 +85,6 @@ The website includes an optional event collector for pageviews, paper/code click
 
 The separate Cloudflare Worker and D1 database live in `analytics/`; deployment instructions, reporting SQL, retention rules and shutdown steps are in [analytics/README.md](analytics/README.md). The website keeps its existing GitHub Pages hosting. Cloudflare tooling has its own pinned dependencies in `analytics/package.json` and is not included in the static website.
 
-Visitors can disable collection in `privacy.html`; DNT/GPC are respected. The same page can mark your browser as owner, excluding future views from ordinary reports. No raw IP or search text is saved in the analytics database.
+Visitors can disable collection in `privacy.html`; DNT/GPC are respected. The same page can mark your browser as owner, excluding future views from ordinary reports. Connection IP addresses and approximate country/region/city are stored with event times in the private analytics database. Search text is not saved. These details follow the event retention window and are excluded from long-term daily aggregates.
 
 Analytics reports include browser profiles, session summaries, ordered paths, resource interest and session click rates, plus country/device/browser distributions. The views read retained detail (90 UTC days plus today); long-term daily counts remain separate. See [analytics/queries.sql](analytics/queries.sql) for ready-to-run SQL.

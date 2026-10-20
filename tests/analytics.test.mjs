@@ -44,7 +44,9 @@ test('real SQL deduplicates page heartbeats and clicks; out-of-order heartbeats 
   assert.equal(stored.active_ms,4500); assert.equal(stored.scroll_pct,90);
   assert.equal(stored.referrer,'example.com');
   assert.ok(!JSON.stringify(stored).includes('secret'));
-  assert.ok(!Object.keys(stored).some(k => /ip|agent/.test(k)));
+  assert.equal(stored.ip,'192.0.2.1');
+  assert.equal(stored.region,null); assert.equal(stored.city,null);
+  assert.ok(!Object.keys(stored).some(k => /agent/i.test(k)));
   assert.equal(sql.prepare("SELECT COUNT(*) n FROM events WHERE type='action'").get().n,1);
   // A collision cannot alter a page owned by a different session/browser.
   await worker.fetch(request([{...e,session_id:id(),active_ms:999999}]),env);
@@ -163,7 +165,7 @@ test('owner classification, cross-tab opt-out, and retry preserve event identity
 test('report migration preserves pre-upgrade events and accepts older collectors without fabricated path metadata',async t=>{
   const sql=new DatabaseSync(':memory:');t.after(()=>sql.close());
   sql.exec(fs.readFileSync(new URL('../analytics/migrations/0001_initial.sql',import.meta.url),'utf8'));
-  const old=normalizeEvent(event(),request([]),now);delete old.page_sequence;delete old.previous_page;
+  const old=normalizeEvent(event(),request([]),now);delete old.page_sequence;delete old.previous_page;delete old.ip;delete old.region;delete old.city;
   const columns=Object.keys(old);
   sql.prepare(`INSERT INTO events (${columns.join(',')}) VALUES (${columns.map(()=>'?').join(',')})`).run(...Object.values(old));
   const before=sql.prepare('SELECT * FROM events').get();
@@ -277,4 +279,50 @@ test('BFCache restore respects privacy changes even when the frozen document mis
     f.handlers.pageshow({persisted:true});a.action('link','paper_pdf');f.timers[0]();
     assert.equal(f.sends.length,count);
   }
+});
+
+test('network metadata uses Cloudflare connection fields, ignores payload/forwarded spoofing and preserves initial snapshot',async t=>{
+  const {sql,db}=database(t);const env=envFor(db);
+  const e=event({ip:'203.0.113.99',country:'US',region:'Spoofed',city:'Spoofed'});
+  const r=request([e]);r.headers.set('X-Forwarded-For','203.0.113.99');
+  Object.defineProperty(r,'cf',{value:{country:'CA',region:'Ontario',city:'Toronto'}});
+  assert.equal((await worker.fetch(r,env)).status,204);
+  let row=sql.prepare('SELECT * FROM events').get();
+  assert.equal(row.ip,'192.0.2.1');assert.equal(row.country,'CA');assert.equal(row.region,'Ontario');assert.equal(row.city,'Toronto');
+  const heartbeat=request([{...e,active_ms:4500,scroll_pct:90}]);heartbeat.headers.set('cf-connecting-ip','2001:db8::1');
+  Object.defineProperty(heartbeat,'cf',{value:{country:'US',region:'California',city:'Los Angeles'}});
+  assert.equal((await worker.fetch(heartbeat,env)).status,204);
+  row=sql.prepare('SELECT * FROM events').get();
+  assert.equal(row.ip,'192.0.2.1');assert.equal(row.region,'Ontario');assert.equal(row.city,'Toronto');assert.equal(row.active_ms,4500);
+  assert.equal(sql.prepare('SELECT COUNT(*) n FROM other_visits').get().n,1);
+  assert.equal(sql.prepare('SELECT ip FROM other_visits').get().ip,'192.0.2.1');
+});
+
+test('IPv4 and IPv6 are accepted, invalid/missing IPs stay null and location text is bounded',()=>{
+  const e=event();
+  for(const ip of ['192.0.2.1','2001:db8::1','::ffff:192.0.2.1']){
+    const r=request([e]);r.headers.set('cf-connecting-ip',ip);assert.equal(normalizeEvent(e,r,now).ip,ip);
+  }
+  for(const ip of ['invalid','999.1.2.3','::invalid','192.0.2.1, 203.0.113.1','[::1]:443']){
+    const r=request([e]);r.headers.set('cf-connecting-ip',ip);assert.equal(normalizeEvent(e,r,now).ip,null);
+  }
+  const r=request([e]);r.headers.delete('cf-connecting-ip');r.headers.set('X-Forwarded-For','203.0.113.1');
+  Object.defineProperty(r,'cf',{value:{region:'  '+ 'x'.repeat(200),city:'\u0000  '}});
+  const n=normalizeEvent(e,r,now);assert.equal(n.ip,null);assert.equal(n.region.length,128);assert.equal(n.city,null);
+});
+
+test('network migration leaves historical fields null through later heartbeats and retention removes network detail',async t=>{
+  const {sql,db}=database(t);const e=event();
+  // Reproduce an event inserted by the pre-upgrade Worker, without the new columns.
+  const old=normalizeEvent(e,request([e]),now);delete old.ip;delete old.region;delete old.city;
+  await db.batch([eventStatement(db,old)]);
+  const r=request([{...e,active_ms:4500}]);Object.defineProperty(r,'cf',{value:{country:'CA',region:'Ontario',city:'Toronto'}});
+  assert.equal((await worker.fetch(r,envFor(db))).status,204);
+  const row=sql.prepare('SELECT ip,region,city FROM events WHERE event_id=?').get(e.event_id);
+  assert.deepEqual({...row},{ip:null,region:null,city:null});
+  const at=Math.floor(now/86400000)*86400000-91*86400000+1000;
+  const expired=event({occurred_at:at});await db.batch([eventStatement(db,normalizeEvent(expired,request([expired]),at+10000))]);
+  await db.batch(retentionStatements(db,now));
+  assert.equal(sql.prepare('SELECT COUNT(*) n FROM events WHERE event_id=?').get(expired.event_id).n,0);
+  assert.ok(!sql.prepare('PRAGMA table_info(daily_totals)').all().some(c=>['ip','region','city'].includes(c.name)));
 });

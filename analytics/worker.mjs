@@ -12,6 +12,17 @@ const ACTIONS = {
 const clean = (v, n = 128) => typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, '').slice(0,n) : '';
 const bounded = (v, max) => Number.isFinite(v) ? Math.max(0, Math.min(max, Math.floor(v))) : 0;
 
+function connectionIP(request) {
+  const value = request.headers.get('cf-connecting-ip');
+  if (!value || value.length > 45) return null;
+  if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(value) && value.split('.').every(part => Number(part) <= 255)) return value;
+  if (value.includes(':') && /^[0-9a-f:.]+$/i.test(value)) {
+    try { new URL(`http://[${value}]/`); return value; } catch { /* Invalid IPv6 address. */ }
+  }
+  return null;
+}
+const locationText = value => typeof value === 'string' ? clean(value.trim()).trim() || null : null;
+
 export function normalizeEvent(raw, request, now = Date.now()) {
   if (!raw || !ID.test(raw.event_id) || !ID.test(raw.page_id) || !ID.test(raw.session_id) || !PAGES.has(raw.page)) throw new Error('Invalid event');
   if (raw.visitor_id != null && !ID.test(raw.visitor_id)) throw new Error('Invalid visitor');
@@ -32,6 +43,7 @@ export function normalizeEvent(raw, request, now = Date.now()) {
     page: raw.page, session_id: raw.session_id, visitor_id: raw.visitor_id ?? null,
     is_returning: raw.is_returning === 0 || raw.is_returning === 1 ? raw.is_returning : null,
     is_owner: raw.is_owner === 1 ? 1 : 0, referrer,
+    ip: connectionIP(request), region: locationText(request.cf?.region), city: locationText(request.cf?.city),
     country: /^[A-Z]{2}$/.test(request.cf?.country || '') ? request.cf.country : '',
     device: /iPad|Tablet/i.test(ua) ? 'tablet' : /Mobi|Android/i.test(ua) ? 'mobile' : 'desktop', browser,
     ...Object.fromEntries(['source','medium','campaign','term','content'].map(k => [`utm_${k}`, clean(raw[`utm_${k}`])])),
@@ -108,7 +120,7 @@ export default {
     if (!env.DB || !env.IP_LIMITER || !env.GLOBAL_LIMITER) return response(503);
     if (!/^(text\/plain|application\/json)(;|$)/i.test(request.headers.get('content-type') || '')) return response(415);
     try {
-      // IP is used only as an ephemeral rate-limit key, never written to D1 or logs.
+      // Connection IP also populates new event records; never include it in logs or public replies.
       const ip = request.headers.get('cf-connecting-ip') || 'unknown';
       if (!(await env.GLOBAL_LIMITER.limit({key:'collect'})).success || !(await env.IP_LIMITER.limit({key:ip})).success) return response(429);
       let events;
