@@ -19,12 +19,16 @@ export function normalizeEvent(raw, request, now = Date.now()) {
   if (raw.type === 'page' && raw.event_id !== raw.page_id) throw new Error('Invalid page ID');
   if (raw.type === 'action' && !ACTIONS[raw.action]?.includes(raw.value)) throw new Error('Invalid action');
   if (!Number.isSafeInteger(raw.occurred_at) || raw.occurred_at > now + 300000 || raw.occurred_at < now - 86400000) throw new Error('Invalid time');
+  // Missing fields from older collectors remain unknown, rather than fabricated.
+  if (raw.page_sequence != null && (!Number.isSafeInteger(raw.page_sequence) || raw.page_sequence < 1 || raw.page_sequence > 1000000)) throw new Error('Invalid page sequence');
+  if (raw.previous_page != null && !PAGES.has(raw.previous_page)) throw new Error('Invalid previous page');
   let referrer = '';
   try { const u = new URL(raw.referrer); if (['http:','https:'].includes(u.protocol)) referrer = u.hostname.slice(0,253); } catch { /* No referrer. */ }
   const ua = request.headers.get('user-agent') || '';
   const browser = /Edg\//.test(ua) ? 'Edge' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Other';
   return {
     event_id: raw.event_id, page_id: raw.page_id, type: raw.type, occurred_at: raw.occurred_at, received_at: now,
+    page_sequence: raw.page_sequence ?? null, previous_page: raw.previous_page ?? null,
     page: raw.page, session_id: raw.session_id, visitor_id: raw.visitor_id ?? null,
     is_returning: raw.is_returning === 0 || raw.is_returning === 1 ? raw.is_returning : null,
     is_owner: raw.is_owner === 1 ? 1 : 0, referrer,
@@ -47,6 +51,7 @@ export function eventStatement(db, event) {
     WHERE events.type = 'page' AND excluded.type = 'page'
       AND events.page_id = excluded.page_id AND events.session_id = excluded.session_id
       AND events.page = excluded.page AND events.occurred_at = excluded.occurred_at
+      AND events.page_sequence IS excluded.page_sequence AND events.previous_page IS excluded.previous_page
       AND events.is_owner = excluded.is_owner
       AND events.visitor_id IS excluded.visitor_id`).bind(...Object.values(event));
 }

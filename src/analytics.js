@@ -37,17 +37,30 @@ export function createAnalytics(options = {}, win = window) {
   } catch { attribution.referrer = ''; }
   let session;
   try { session = JSON.parse(storage(tab,'getItem','session')); } catch { /* Missing session. */ }
-  let stopped = false;
+  let stopped = false, awaitingRestore = false;
   let view = null, visible = doc.visibilityState !== 'hidden', lastTick = win.Date.now(), inFlight = false;
   const queue = new Map();
+  function preferencesChanged() {
+    if (stopped) return true;
+    if (storage(local,'getItem','disabled') === '1' || (storage(local,'getItem','owner') === '1' ? 1 : 0) !== owner) {
+      stopped = true; queue.clear(); return true;
+    }
+    return false;
+  }
+  const knownPage = value => PAGES.has(value) || value === 'application/not-found';
+  function saveSession() { storage(tab,'setItem','session',JSON.stringify(session)); }
   function ensureSession() {
     const now = win.Date.now();
-    if (!session || !/^[a-zA-Z0-9_-]{16,64}$/.test(session.id || '') || !Number.isFinite(session.last) || now - session.last > INACTIVE_MS || now < session.last) {
-      session = { id:uuid(), last:now, returning: visitorId ? (storage(local,'getItem','seen') === '1' ? 1 : 0) : null };
+    if (!session || !/^[a-zA-Z0-9_-]{16,64}$/.test(session.id || '') || !Number.isFinite(session.last) || now - session.last >= INACTIVE_MS || now < session.last || session.sequence >= 1000000) {
+      session = { id:uuid(), last:now, sequence:0, lastPage:null, returning: visitorId ? (storage(local,'getItem','seen') === '1' ? 1 : 0) : null };
       if (visitorId) storage(local,'setItem','seen','1');
     }
+    // Older cached scripts have no sequence metadata; begin recording from here.
+    if (!Number.isSafeInteger(session.sequence) || session.sequence < 0) session.sequence = 0;
+    if (!knownPage(session.lastPage)) session.lastPage = null;
+    if (!visitorId || ![0,1].includes(session.returning)) session.returning = null;
     session.last = now;
-    storage(tab,'setItem','session',JSON.stringify(session));
+    saveSession();
   }
   function enqueue(event) {
     if (stopped) return;
@@ -66,11 +79,15 @@ export function createAnalytics(options = {}, win = window) {
   }
   function snapshot() { if (view) enqueue({...view}); }
   function context(type) {
-    return { type, page:view.page, page_id:view.page_id, session_id:session.id, visitor_id:visitorId, is_returning:session.returning, is_owner:owner, ...attribution };
+    return { type, page:view.page, page_id:view.page_id, page_sequence:view.page_sequence, previous_page:view.previous_page, session_id:session.id, visitor_id:visitorId, is_returning:session.returning, is_owner:owner, ...attribution };
   }
   function openView(page) {
     const id = uuid();
-    view = { page, page_id:id };
+    const previous = session.lastPage;
+    session.sequence += 1;
+    session.lastPage = page;
+    saveSession();
+    view = { page, page_id:id, page_sequence:session.sequence, previous_page:previous };
     view = {...context('page'),event_id:id,occurred_at:win.Date.now(),active_ms:0,scroll_pct:0};
     lastTick = win.Date.now(); scroll(); snapshot();
   }
@@ -80,8 +97,7 @@ export function createAnalytics(options = {}, win = window) {
     if (view && (previous !== session.id || win.Date.now() - view.occurred_at > 23 * 60 * 60 * 1000)) { snapshot(); openView(view.page); }
   }
   async function flush(beacon = false) {
-    if (stopped || (inFlight && !beacon)) return;
-    if (storage(local,'getItem','disabled') === '1') { stopped = true; queue.clear(); return; }
+    if (preferencesChanged() || (inFlight && !beacon)) return;
     const batch = [...queue.values()].slice(0,20);
     if (!batch.length) return;
     const body = JSON.stringify({events:batch});
@@ -98,14 +114,14 @@ export function createAnalytics(options = {}, win = window) {
   }
   const api = {
     page(page) {
-      if (stopped) return;
+      if (preferencesChanged()) return;
       const next = PAGES.has(page) ? page : 'application/not-found';
       account();
       if (view?.page === next) { refreshSession(); return; }
       snapshot(); ensureSession(); openView(next); void flush();
     },
     action(action,value) {
-      if (stopped || !view) return;
+      if (preferencesChanged() || !view) return;
       account(); refreshSession();
       enqueue({...context('action'),event_id:uuid(),occurred_at:win.Date.now(),action,value});
     },
@@ -128,14 +144,27 @@ export function createAnalytics(options = {}, win = window) {
   });
   win.addEventListener('scroll',scroll,{passive:true});
   doc.addEventListener('visibilitychange',() => {
+    if (preferencesChanged()) return;
     account(); visible = doc.visibilityState !== 'hidden'; lastTick = win.Date.now();
-    if (visible) refreshSession();
+    if (visible) { if (!awaitingRestore) refreshSession(); }
     else { snapshot(); void flush(true); }
   });
-  win.addEventListener('pagehide',() => { account(); snapshot(); visible = false; void flush(true); });
-  win.addEventListener('pageshow',() => { visible = doc.visibilityState !== 'hidden'; lastTick = win.Date.now(); if (visible) refreshSession(); });
+  win.addEventListener('pagehide',event => {
+    if (preferencesChanged()) return;
+    account(); snapshot(); visible = false; awaitingRestore = event?.persisted === true; void flush(true);
+  });
+  win.addEventListener('pageshow',event => {
+    if (preferencesChanged()) return;
+    awaitingRestore = false;
+    visible = doc.visibilityState !== 'hidden'; lastTick = win.Date.now();
+    if (event.persisted && view) {
+      // Another document in this tab may have advanced the session while frozen.
+      try { const saved = JSON.parse(storage(tab,'getItem','session')); if (saved) session = saved; } catch { /* Use in-memory session. */ }
+      ensureSession(); openView(view.page); void flush();
+    } else if (visible) refreshSession();
+  });
   win.setInterval(() => {
-    if (stopped) return;
+    if (preferencesChanged() || awaitingRestore) return;
     account();
     if (visible) { refreshSession(); scroll(); snapshot(); }
     void flush();

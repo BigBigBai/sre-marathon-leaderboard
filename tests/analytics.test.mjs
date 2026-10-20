@@ -16,7 +16,9 @@ function request(events, overrides = {}) {
 }
 function database(t) {
   const sql = new DatabaseSync(':memory:');
-  sql.exec(fs.readFileSync(new URL('../analytics/migrations/0001_initial.sql',import.meta.url),'utf8'));
+  for (const file of fs.readdirSync(new URL('../analytics/migrations/',import.meta.url)).filter(f=>f.endsWith('.sql')).sort()) {
+    sql.exec(fs.readFileSync(new URL(`../analytics/migrations/${file}`,import.meta.url),'utf8'));
+  }
   t.after(() => sql.close());
   const db = {
     prepare(query) { return {bind(...args) { return {run:() => sql.prepare(query).run(...args)}; }}; },
@@ -156,4 +158,123 @@ test('owner classification, cross-tab opt-out, and retry preserve event identity
   f.handlers.storage({key:'sre-marathon.analytics.disabled'});
   const count=f.sends.length;a.action('link','paper_pdf');f.timers[0]();f.handlers.pagehide();
   assert.equal(f.sends.length,count);
+});
+
+test('report migration preserves pre-upgrade events and accepts older collectors without fabricated path metadata',async t=>{
+  const sql=new DatabaseSync(':memory:');t.after(()=>sql.close());
+  sql.exec(fs.readFileSync(new URL('../analytics/migrations/0001_initial.sql',import.meta.url),'utf8'));
+  const old=normalizeEvent(event(),request([]),now);delete old.page_sequence;delete old.previous_page;
+  const columns=Object.keys(old);
+  sql.prepare(`INSERT INTO events (${columns.join(',')}) VALUES (${columns.map(()=>'?').join(',')})`).run(...Object.values(old));
+  const before=sql.prepare('SELECT * FROM events').get();
+  sql.exec(fs.readFileSync(new URL('../analytics/migrations/0002_reports_and_paths.sql',import.meta.url),'utf8'));
+  const after=sql.prepare('SELECT * FROM events').get();
+  for(const key of columns)assert.equal(after[key],before[key],key);
+  assert.equal(after.page_sequence,null);assert.equal(after.previous_page,null);
+  assert.equal(sql.prepare('SELECT COUNT(*) n FROM other_visits').get().n,1);
+  assert.equal(sql.prepare('SELECT sequence_ordered FROM session_paths').get().sequence_ordered,0);
+  const {db}=database(t);
+  assert.equal((await worker.fetch(request([event()]),envFor(db))).status,204);
+  for(const fields of [{page_sequence:0},{page_sequence:1.5},{page_sequence:1000001},{page_sequence:'2'},{previous_page:'https://secret.example/?token=private'}]) {
+    assert.equal((await worker.fetch(request([event(fields)]),envFor(db))).status,400);
+  }
+});
+
+test('reports separate owner activity, exclude unknown browser IDs from profiles and deduplicate resource interest',async t=>{
+  const {sql,db}=database(t);const visitor=id(),session=id();
+  const first=event({visitor_id:visitor,session_id:session,page_sequence:1});
+  const second=event({visitor_id:visitor,session_id:session,page:'application/train-ticket',page_sequence:2,previous_page:'home'});
+  const owner=event({visitor_id:visitor,session_id:session,is_owner:1,page_sequence:1});
+  const anonymous=event({visitor_id:null,page_sequence:1});
+  const click={...first,event_id:id(),type:'action',action:'link',value:'paper_pdf'};
+  const anonClick={...anonymous,event_id:id(),type:'action',action:'link',value:'paper_pdf'};
+  for(const e of [first,second,owner,anonymous,click,click,anonClick])await db.batch([eventStatement(db,normalizeEvent(e,request([e]),now))]);
+  assert.equal(sql.prepare('SELECT COUNT(*) n FROM owner_visits').get().n,1);
+  assert.equal(sql.prepare('SELECT COUNT(*) n FROM other_visits').get().n,3);
+  assert.equal(sql.prepare('SELECT COUNT(*) n FROM visitor_profiles').get().n,2);
+  const profile=sql.prepare('SELECT * FROM visitor_profiles WHERE is_owner=0').get();
+  assert.equal(profile.pageviews,2);assert.equal(profile.sessions,1);assert.equal(profile.active_ms,6000);
+  const normal=sql.prepare('SELECT * FROM session_summary WHERE visitor_id=? AND is_owner=0').get(visitor);
+  assert.equal(normal.pageviews,2);assert.equal(normal.distinct_pages,2);assert.equal(normal.actions,1);assert.equal(normal.resource_clicks,1);
+  const anon=sql.prepare('SELECT * FROM session_summary WHERE visitor_id IS NULL').get();
+  assert.equal(anon.actions,1);assert.equal(anon.is_returning,0);
+  const resource=sql.prepare('SELECT * FROM resource_interest WHERE is_owner=0').get();
+  assert.equal(resource.clicks,2);assert.equal(resource.known_browsers,1);assert.equal(resource.sessions,2);
+  sql.exec(fs.readFileSync(new URL('../analytics/queries.sql',import.meta.url),'utf8'));
+});
+
+test('paths use valid sequence order for time ties and clock changes, with explicit fallback for legacy or duplicate sequence metadata',async t=>{
+  const {sql,db}=database(t);const session=id(),visitor=id();
+  const first=event({session_id:session,visitor_id:visitor,page_sequence:1,occurred_at:now-1000});
+  const second=event({session_id:session,visitor_id:visitor,page_sequence:2,previous_page:'home',page:'application/astronomy-shop',occurred_at:now-2000});
+  for(const e of [second,first,second])await db.batch([eventStatement(db,normalizeEvent(e,request([e]),now))]);
+  let paths=sql.prepare('SELECT * FROM session_paths ORDER BY step').all();
+  assert.deepEqual(paths.map(p=>p.page_sequence),[1,2]);assert.ok(paths.every(p=>p.sequence_ordered===1));
+  const legacy=event({session_id:session,visitor_id:visitor,occurred_at:now-4000});
+  await db.batch([eventStatement(db,normalizeEvent(legacy,request([legacy]),now))]);
+  paths=sql.prepare('SELECT * FROM session_paths ORDER BY step').all();
+  assert.equal(paths[0].page_id,legacy.page_id);assert.ok(paths.every(p=>p.sequence_ordered===0));
+  sql.prepare('DELETE FROM events WHERE event_id=?').run(legacy.event_id);
+  const duplicate=event({session_id:session,visitor_id:visitor,page_sequence:2,occurred_at:now-3000});
+  await db.batch([eventStatement(db,normalizeEvent(duplicate,request([duplicate]),now))]);
+  assert.equal(sql.prepare('SELECT MAX(sequence_ordered) n FROM session_paths').get().n,0);
+});
+
+test('resource conversion uses eligible browser-session pairs and matching pages, excluding owners, stale and orphan clicks',async t=>{
+  const {sql,db}=database(t);
+  const first=event(),other=event({visitor_id:null}),owner=event({is_owner:1});
+  const old=event({occurred_at:now-31*86400000});
+  const normalClick={...first,type:'action',event_id:id(),action:'link',value:'paper_pdf'};
+  const anonClick={...other,type:'action',event_id:id(),action:'link',value:'paper_pdf'};
+  const ownerClick={...owner,type:'action',event_id:id(),action:'link',value:'paper_pdf'};
+  const oldPageClick={...old,type:'action',event_id:id(),occurred_at:now-1000,action:'link',value:'benchmark_code'};
+  const orphanClick=event({type:'action',action:'link',value:'paper_pdf'});
+  const mismatch={...normalClick,event_id:id(),visitor_id:id(),value:'benchmark_code'};
+  for(const e of [first,other,owner,old,normalClick,normalClick,anonClick,ownerClick,oldPageClick,orphanClick,mismatch]) {
+    await db.batch([eventStatement(db,normalizeEvent(e,request([e]),e===old?old.occurred_at+10000:now))]);
+  }
+  const text=fs.readFileSync(new URL('../analytics/queries.sql',import.meta.url),'utf8');
+  const query=text.match(/WITH eligible_pages AS[\s\S]*?;/)[0];
+  const results=sql.prepare(query).all();
+  const paper=results.find(r=>r.resource==='paper_pdf');assert.equal(paper.eligible_sessions,2);assert.equal(paper.clicked_sessions,2);assert.equal(paper.session_click_pct,100);
+  const code=results.find(r=>r.resource==='benchmark_code');assert.equal(code.clicked_sessions,0);assert.equal(code.session_click_pct,0);
+  sql.exec('DELETE FROM events');
+  assert.ok(sql.prepare(query).all().every(r=>r.eligible_sessions===0&&r.clicked_sessions===0&&r.session_click_pct===null));
+});
+
+test('page sequences persist across virtual routes and reloads; BFCache restore reads the latest tracked predecessor',async()=>{
+  const f=fakeBrowser(),a=createAnalytics(options,f.win);a.page('home');await Promise.resolve();
+  f.handlers.pageshow({persisted:false});a.page('home');
+  a.page('application/astronomy-shop');a.page('application/astronomy-shop');await Promise.resolve();
+  f.handlers.pagehide();
+  const second=fakeBrowser();second.win.localStorage=f.win.localStorage;second.win.sessionStorage=f.win.sessionStorage;second.advance(1000);
+  const b=createAnalytics(options,second.win);b.page('application/train-ticket');await Promise.resolve();second.handlers.pagehide();
+  // Restored first document must see the other document's session sequence.
+  f.advance(2000);f.handlers.pageshow({persisted:true});await Promise.resolve();f.handlers.pagehide();
+  const es=[...await f.events(),...await second.events()];
+  const pages=[...new Map(es.filter(e=>e.type==='page').map(e=>[e.event_id,e])).values()].sort((x,y)=>x.page_sequence-y.page_sequence);
+  assert.deepEqual(pages.map(p=>p.page_sequence),[1,2,3,4]);
+  assert.deepEqual(pages.map(p=>p.previous_page),[null,'home','application/astronomy-shop','application/train-ticket']);
+  assert.deepEqual(pages.map(p=>p.page),['home','application/astronomy-shop','application/train-ticket','application/astronomy-shop']);
+  assert.equal(new Set(pages.map(p=>p.session_id)).size,1);
+});
+
+test('idle BFCache restoration starts a new session and resets sequence without counting the hidden interval',async()=>{
+  const f=fakeBrowser(),a=createAnalytics(options,f.win);a.page('home');await Promise.resolve();
+  f.advance(3000);f.handlers.pagehide({persisted:true});f.win.document.visibilityState='hidden';f.handlers['doc:visibilitychange']();f.advance(1800000);
+  // Chrome emits visibilitychange(visible) before pageshow(persisted).
+  f.win.document.visibilityState='visible';f.handlers['doc:visibilitychange']();f.timers[0]();
+  f.handlers.pageshow({persisted:true});await Promise.resolve();f.handlers.pagehide();
+  const pages=[...new Map((await f.events()).filter(e=>e.type==='page').map(e=>[e.event_id,e])).values()];
+  assert.equal(pages.length,2);assert.notEqual(pages[0].session_id,pages[1].session_id);
+  assert.equal(pages[1].page_sequence,1);assert.equal(pages[1].previous_page,null);assert.equal(pages[0].active_ms,3000);assert.equal(pages[1].active_ms,0);
+});
+
+test('BFCache restore respects privacy changes even when the frozen document missed storage events',async()=>{
+  for(const [key,value] of [['disabled','1'],['owner','1']]){
+    const f=fakeBrowser(),a=createAnalytics(options,f.win);a.page('home');await Promise.resolve();f.handlers.pagehide();
+    f.win.localStorage.setItem('sre-marathon.analytics.'+key,value);const count=f.sends.length;
+    f.handlers.pageshow({persisted:true});a.action('link','paper_pdf');f.timers[0]();
+    assert.equal(f.sends.length,count);
+  }
 });

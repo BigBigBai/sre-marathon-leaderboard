@@ -14,7 +14,9 @@ The resource IDs are in your ignored local `wrangler.jsonc`; recover them using 
 
 ## Data and definitions
 
-- `page`: one record per rendered homepage or application detail view. Reloading creates another view; navigating homepage sections does not. Unknown application IDs share `application/not-found`.
+- `page`: one record per rendered homepage or application detail view. Reloading, switching applications, and back/forward restoration from the browser's BFCache create another view; navigating homepage sections does not. A normal initial `pageshow` does not duplicate the first view. Unknown application IDs share `application/not-found`.
+- New pageviews carry a session-local `page_sequence` and `previous_page` (the previous tracked canonical page, not a URL). Sequence persists across reloads and same-tab document navigation; an expired session resets to sequence 1 and no predecessor. BFCache restoration reloads the latest stored session metadata before starting its new view. Blocked session storage prevents persistence across documents. Tab duplication may copy session IDs/sequences; reports flag non-unique sequence metadata and fall back to time order.
+- Already-open older collectors keep working after migration: their sequence and predecessor stay NULL. Historical sequence/predecessor values are not fabricated.
 - Page heartbeats update the same event ID with the maximum cumulative foreground milliseconds and scroll percentage. Duplicate and out-of-order uploads do not inflate pageviews, time or depth.
 - `action`: paper/PDF/code/results links; section navigation; backbone filter; sort column; full-metrics toggle; chart/backbone choice; search use (once per document, no text); successful clipboard copy.
 - A random localStorage browser ID approximates browsers, not people. A sessionStorage session renews after 30 minutes without recorded activity. Visible page heartbeats count as activity. Tabs normally have separate sessions, but browsers may copy sessionStorage when duplicating tabs. First/returning classification is a browser-local signal, not verified identity.
@@ -88,6 +90,49 @@ SELECT action,value,COUNT(*) AS count FROM events
 WHERE type='action' AND is_owner=0
 GROUP BY action,value ORDER BY count DESC;
 ```
+
+### Report views
+
+Apply `0002_reports_and_paths.sql` before deploying the new Worker or collector. The migration only adds nullable fields, an index and views; existing events remain unchanged. Cached older collectors are accepted. New sequence fields appear only on new pageviews.
+
+| View | Meaning |
+| --- | --- |
+| `owner_visits` / `other_visits` | Pageviews split by owner mark; action records are excluded. |
+| `visitor_profiles` | Per known browser and owner category: first retained observation, last seen, pageviews, sessions and foreground time. NULL browser IDs are excluded. |
+| `session_summary` | Per session, browser and owner category: pageviews, distinct pages, foreground time, max depth, return classification, actions and resource clicks. Sessions without any observed pageview are absent. |
+| `session_paths` | Ordered pageviews with `step`, sequence and predecessor. `sequence_ordered=1` means every retained page in that group has unique sequence metadata; otherwise order is inferred from client time, server receipt time and event ID. This flag does not guarantee a complete journey: uploads can be lost and retention can remove early steps. |
+| `resource_interest` | Per resource and owner category: click count, known browsers, sessions, and last click time. |
+
+Views read retained event detail and do not store a separate permanent copy of browser/session IDs. Profile first-seen times describe the retained window; return classification is still the browser's first/returning signal, not inferred from retention-limited first-seen time. Owner and visitor records are grouped separately, even if they share an identifier.
+
+`queries.sql` includes the original trend/interaction/source queries plus owner comparison, browser profiles, sessions, the most recently active visitor session's path, resource interest, session resource conversion, and country/device/browser distributions. Report comments specify each time window. The owner comparison and explicit owner sample are intentionally separate from ordinary visitor reports.
+
+Resource conversion uses browser-session pairs with an observed ordinary pageview in the last 30 days as the denominator. The numerator is those same pairs with a resource click on an eligible matching page in the period; it counts repeated clicks once. Owner clicks, orphan/mismatched clicks and clicks on pages that began outside the window are excluded. A zero denominator produces NULL rather than 0%. It measures observed link-click activity, not actual reading, downloads, or successful code use.
+
+For a specific session, run (substitute IDs from `session_summary`):
+
+```sql
+SELECT step,page,previous_page,page_sequence,sequence_ordered,
+       datetime(occurred_at/1000,'unixepoch') AS started_utc,
+       ROUND(active_ms/1000.0) AS foreground_seconds,scroll_pct
+FROM session_paths
+WHERE is_owner=0 AND session_id='SESSION_ID' AND visitor_id IS 'BROWSER_ID'
+ORDER BY step;
+```
+
+For an anonymous session, replace `visitor_id IS 'BROWSER_ID'` with `visitor_id IS NULL`.
+
+### Updating an existing deployment
+
+```sh
+npm run build
+npm run check
+npm test
+npm --prefix analytics run db:migrate
+npm --prefix analytics run deploy
+```
+
+Verify the Worker accepts both an old-format packet and a new packet with sequence metadata, then push the frontend to GitHub Pages. Migrate the schema first, then deploy the Worker, then the website. The Pages workflow does not migrate D1 automatically.
 
 The CLI also supports queries after login:
 

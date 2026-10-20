@@ -81,8 +81,10 @@ The initial SWE-Marathon replica remains in Git history. Its results, team list,
 
 ## Private project analytics
 
-The website includes an optional event collector for pageviews, paper/code clicks, leaderboard interactions and citation copies. Configure the public Worker URL in `src/site.config.json` → `analytics.endpoint`; an empty value disables collection.
+The website includes an optional event collector for pageviews, paper/code clicks, leaderboard interactions and citation copies. Session-local page sequences and previous tracked pages support journey reports, including back/forward cache restores. Configure the public Worker URL in `src/site.config.json` → `analytics.endpoint`; an empty value disables collection.
 
 The separate Cloudflare Worker and D1 database live in `analytics/`; deployment instructions, reporting SQL, retention rules and shutdown steps are in [analytics/README.md](analytics/README.md). The website keeps its existing GitHub Pages hosting. Cloudflare tooling has its own pinned dependencies in `analytics/package.json` and is not included in the static website.
 
 Visitors can disable collection in `privacy.html`; DNT/GPC are respected. The same page can mark your browser as owner, excluding future views from ordinary reports. No raw IP or search text is saved in the analytics database.
+
+Analytics reports include browser profiles, session summaries, ordered paths, resource interest and session click rates, plus country/device/browser distributions. The views read retained detail (90 UTC days plus today); long-term daily counts remain separate. See [analytics/queries.sql](analytics/queries.sql) for ready-to-run SQL.
